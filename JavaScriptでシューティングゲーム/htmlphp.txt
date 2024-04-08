@@ -1,0 +1,342 @@
+<?php
+// データベース接続情報
+$servername = "localhost"; // データベースのホスト名
+$username = "your_username"; // データベースのユーザー名
+$password = "your_password"; // データベースのパスワード
+$dbname = "your_database"; // データベース名
+
+// データベース接続
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// データベース接続エラーの確認
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// ユーザー名とスコアの取得（例としてランキング上位30位を取得）
+$sql = "SELECT player_name, highest_score, previous_score FROM rankings ORDER BY highest_score DESC LIMIT 30";
+$result = $conn->query($sql);
+
+?>
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="(JavaScriptの作品です)挑戦者よ、星々の戦場で真のシューターになるチャンスだ！リアルタイムのランキングで友達や世界中のプレイヤーと競い合い、栄光を手に入れよう。">
+    <title>星襲戦記物語</title>
+    <link rel="icon" href="image/favi.png">
+    <link rel="stylesheet" href="css/sanitize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="misc.js" defer></script>
+    <script src="data.js" defer></script>
+    <script src="jiki.js" defer></script>
+    <script src="teki.js" defer></script>
+    <script src="shooting_game.js" defer></script>
+</head>
+
+<body>
+    <audio id="bgm" loop autoplay>
+        <source src="bgm/bgm4.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="main-body">
+        <div id="content">
+            <canvas id="can"></canvas>
+            <input type="button" value="ゲームスタート" class="Game-Start">
+
+            <header class="page-header">
+                <nav>
+                    <ul class="main-nav">
+                        <li><a href="home.html">ホームに戻る</a></li>
+                        <li><a href="story_mode.html">ストーリーモード</a></li>
+                        <li><a href="score_mode.html">スコアアタックモード</a></li>
+                    </ul>
+                </nav>
+            </header>
+
+            <article class="ps-article">
+                <h1>星襲戦記物語</h1>
+                <h2>☆シューティングゲーム操作方法☆</h2>
+                <ul class="ps-ul">
+                    <li><strong>ゲームスタートボタンをクリックで1秒後に開始。</strong></li>
+                    <li>spaceキーで自機の弾発射です。</li>
+                    <li>矢印キーで移動します。「 ← ↑ ↓ → 」</li>
+                    <li>ゲームオーバー時はRキーで再スタートです。</li>
+                    <li>ゲームプレイ中は(Windows)ctrl+R <br>
+                        (mac)command+Rでリセットです。</li>
+                    <li>sキーでbgmのON/OFF</li>
+                    <li>ゲーム終了はブラウザーの×です。</li>
+                    <li>PCの性能によりゲームに <br>
+                        遅延が発生することをご了承ください。</li>
+                    <li>※ゲームスタートボタンを連続でクリックするとゲームが高速化するので注意</li>
+                </ul>
+            </article>
+        </div>
+
+
+        <div class="div-ranking">
+            <h3>╗|║.:*・° ランキング °・*:. ║|╔</h3>
+            <input type="button" onclick="location.href='./high-score.html'" value="上位30位ランキング" class="div-ranking-a">
+            <p id="ranking-p">
+                ※スコアアタックモードのランキング記録は、1週間保持されます（毎週日曜日の20時に更新されます）
+            </p>
+        </div>
+
+        <footer class="footer-information">
+            <form action="" class="form">
+                <table class="form-table">
+                    <tr>
+                        <td>player name <br>(12文字以内)</td>
+                        <td>Highest Score <br>(最高記録)</td>
+                        <td>Previous Score <br>(前回の記録)</td>
+                    </tr>
+
+                    <?php
+        // 取得したデータをテーブル形式で表示
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr><td>" . htmlspecialchars($row["player_name"]) . "</td><td>" . $row["highest_score"] . "</td><td>" . $row["previous_score"] . "</td></tr>";
+            }
+        } else {
+            echo "<tr><td colspan='3'>ランキング情報</td></tr>";
+        }
+        ?>
+    </table>
+</body>
+
+</html>
+
+<?php
+
+$conn->close();
+?>
+
+
+
+
+@charset "UTF-8";
+
+body {
+    background-color: #333;
+    border: 5px solid rebeccapurple;
+    border-radius: 5px;
+    color: #fff;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+}
+
+/* ----------ゲーム画面----------- */
+#can {
+    border: #fff solid 2px;
+    border-radius: 3px;
+    max-width: 100%;
+    margin-top: 10px;
+}
+
+#game-container {
+    position: relative;
+}
+
+.Game-Start {
+    position: absolute;
+    bottom: 190px;
+    left: 24px;
+}
+
+
+/* ---------------nav----------------- */
+nav {
+    margin: 0 auto;
+    max-width: 1280px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.main-nav {
+    display: flex;
+    font-size: 1.8vw;
+}
+
+.main-nav a {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 20px;
+}
+
+.main-nav li:first-child {
+    margin-left: 0;
+}
+
+/* ------------article内部-------------- */
+
+h1 {
+    font-size: 24px;
+    color: red;
+    text-align: center;
+    padding: 30px;
+    margin: 0;
+    width: 100%;
+    animation: slidedown 1s ease forwards;
+}
+
+@keyframes slidedown {
+    0% {
+        transform: translateY(-40%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(50%);
+        opacity: 1;
+    }
+}
+
+
+
+h2 {
+    font-size: 18px;
+    color: lightskyblue;
+    text-align: center;
+    padding-top: 20px;
+    margin: 0;
+    width: 100%;
+}
+
+
+article {
+    margin: 0;
+    bottom: 50px;
+
+    animation: fadein 1.5s ease forwards;
+}
+
+@keyframes fadein {
+    0% {
+
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+
+.ps-article li {
+    text-align: center;
+    color: lightseagreen;
+    list-style: none;
+}
+
+.ps-article li::before {
+    content: "☆";
+    margin-right: 10px;
+}
+
+.article-container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.article-container article {
+    color: lightseagreen;
+    font-size: 18px;
+    margin: 10px;
+}
+
+.article-container article ul {
+    padding-left: 20px;
+}
+
+
+/* ------------div.ranking-a~p---------- */
+h3 {
+    color: gold;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin: 10px 0;
+
+}
+
+.div-ranking {
+    text-align: center;
+    margin: 10px;
+}
+
+.div-ranking-a {
+    display: block;
+    margin: 10px auto;
+    color: #ff0000;
+}
+
+
+#ranking-p {
+    text-align: center;
+}
+
+
+
+/* --------------footer.form-table----------------- */
+
+
+.footer-information {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.form-table {
+    font-size: 12px;
+    width: 65%;
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+
+.form-table tr {
+    border-bottom: 1px solid #ccc;
+}
+
+.form-table td {
+    margin-bottom: 5px;
+}
+
+
+
+/* ----------コピーライト------------- */
+
+.small-copy {
+    display: block;
+    margin-top: 20px;
+}
+
+/* ---------------メディアクエリ（レスポンシブ）対応------------------- */
+
+/* 画面幅が1280px以下の場合のスタイル */
+@media screen and (max-width: 1280px) {
+
+    h1,
+    h2,
+    article {
+        width: auto;
+        float: none;
+        margin-right: 0;
+        margin-left: 0;
+    }
+}
+
+/* 画面幅が1280px以下の場合のテーブルのスタイル */
+@media screen and (max-width: 1280px) {
+    .form-table {
+        width: 100%;
+    }
+}
